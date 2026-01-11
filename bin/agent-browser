@@ -1,40 +1,19 @@
 #!/bin/sh
 # agent-browser CLI wrapper
-# Tries native binary first, falls back to Node.js
 
-# Resolve symlinks to find real script location
 SCRIPT="$0"
 while [ -L "$SCRIPT" ]; do
   SCRIPT_DIR="$(cd "$(dirname "$SCRIPT")" && pwd)"
   SCRIPT="$(readlink "$SCRIPT")"
-  # Handle relative symlinks
-  case "$SCRIPT" in
-    /*) ;;
-    *) SCRIPT="$SCRIPT_DIR/$SCRIPT" ;;
-  esac
+  case "$SCRIPT" in /*) ;; *) SCRIPT="$SCRIPT_DIR/$SCRIPT" ;; esac
 done
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT")" && pwd)"
 
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
-
-case "$OS" in
-  darwin) OS="darwin" ;;
-  linux) OS="linux" ;;
-  mingw*|msys*|cygwin*) OS="win32" ;;
-esac
-
-case "$ARCH" in
-  x86_64|amd64) ARCH="x64" ;;
-  aarch64|arm64) ARCH="arm64" ;;
-esac
+case "$OS" in darwin) OS="darwin" ;; linux) OS="linux" ;; mingw*|msys*|cygwin*) OS="win32" ;; esac
+case "$ARCH" in x86_64|amd64) ARCH="x64" ;; aarch64|arm64) ARCH="arm64" ;; esac
 
 BINARY="$SCRIPT_DIR/agent-browser-${OS}-${ARCH}"
-
-# Try native binary if it exists
-if [ -f "$BINARY" ] && [ -x "$BINARY" ]; then
-  exec "$BINARY" "$@"
-fi
-
-# Fall back to Node.js
+[ -f "$BINARY" ] && [ -x "$BINARY" ] && exec "$BINARY" "$@"
 exec node "$SCRIPT_DIR/../dist/index.js" "$@"
